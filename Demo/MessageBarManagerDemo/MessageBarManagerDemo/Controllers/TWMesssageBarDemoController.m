@@ -142,21 +142,30 @@ static UIColor *kTWMesssageBarDemoControllerButtonColor = nil;
 {
     [[TWMessageBarManager sharedInstance] showMessageWithTitle:kStringMessageBarErrorTitle
                                                    description:kStringMessageBarErrorMessage
-                                                          type:TWMessageBarMessageTypeError];
+                                                          type:TWMessageBarMessageTypeError
+                                                      callback:^{
+                                                          NSLog(@"errorMessageTapped");
+                                                      }];
 }
 
 - (void)successButtonPressed:(id)sender
 {
     [[TWMessageBarManager sharedInstance] showMessageWithTitle:kStringMessageBarSuccessTitle
                                                    description:kStringMessageBarSuccessMessage
-                                                          type:TWMessageBarMessageTypeSuccess];
+                                                          type:TWMessageBarMessageTypeSuccess
+                                                      callback:^{
+                                                          NSLog(@"successMessageTapped");
+                                                      }];
 }
 
 - (void)infoButtonPressed:(id)sender
 {
     [[TWMessageBarManager sharedInstance] showMessageWithTitle:kStringMessageBarInfoTitle
                                                    description:kStringMessageBarInfoMessage
-                                                          type:TWMessageBarMessageTypeInfo];
+                                                          type:TWMessageBarMessageTypeInfo
+                                                      callback:^{
+                                                          NSLog(@"infoMessageTapped");
+                                                      }];
 }
 
 - (void)hideAllButtonPressed:(id)sender

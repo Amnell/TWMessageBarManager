@@ -54,7 +54,7 @@ static UIColor *kTWDefaultMessageBarStyleSheetInfoStrokeColor = nil;
 
 @end
 
-@interface TWMessageView : UIView
+@interface TWMessageView ()
 
 @property (nonatomic, copy) NSString *titleString;
 @property (nonatomic, copy) NSString *descriptionString;
@@ -147,6 +147,34 @@ static UIColor *kTWDefaultMessageBarStyleSheetInfoStrokeColor = nil;
 
 #pragma mark - Public
 
+- (TWMessageView *)messageWithTitle:(NSString *)title description:(NSString *)description type:(TWMessageBarMessageType)type
+{
+    return [self messageWithTitle:title description:description type:type duration:[TWMessageBarManager durationForMessageType:type] callback:nil];
+}
+
+- (TWMessageView *)messageWithTitle:(NSString *)title description:(NSString *)description type:(TWMessageBarMessageType)type callback:(void (^)())callback
+{
+    return [self messageWithTitle:title description:description type:type duration:[TWMessageBarManager durationForMessageType:type] callback:nil];
+}
+
+- (TWMessageView *)messageWithTitle:(NSString *)title description:(NSString *)description type:(TWMessageBarMessageType)type duration:(CGFloat)duration
+{
+    return [self messageWithTitle:title description:description type:type duration:[TWMessageBarManager durationForMessageType:type] callback:nil];
+}
+
+- (TWMessageView *)messageWithTitle:(NSString *)title description:(NSString *)description type:(TWMessageBarMessageType)type duration:(CGFloat)duration callback:(void (^)())callback
+{
+    TWMessageView *messageView = [[TWMessageView alloc] initWithTitle:title description:description type:type];
+    messageView.delegate = self;
+    
+    messageView.callbacks = callback ? [NSArray arrayWithObject:callback] : [NSArray array];
+    messageView.hasCallback = callback ? YES : NO;
+    
+    messageView.duration = duration;
+    
+    return messageView;
+}
+
 - (void)showMessageWithTitle:(NSString *)title description:(NSString *)description type:(TWMessageBarMessageType)type
 {
     [self showMessageWithTitle:title description:description type:type duration:[TWMessageBarManager durationForMessageType:type] callback:nil];
@@ -164,16 +192,12 @@ static UIColor *kTWDefaultMessageBarStyleSheetInfoStrokeColor = nil;
 
 - (void)showMessageWithTitle:(NSString *)title description:(NSString *)description type:(TWMessageBarMessageType)type duration:(CGFloat)duration callback:(void (^)())callback
 {
-    TWMessageView *messageView = [[TWMessageView alloc] initWithTitle:title description:description type:type];
-    messageView.delegate = self;
-    
-    messageView.callbacks = callback ? [NSArray arrayWithObject:callback] : [NSArray array];
-    messageView.hasCallback = callback ? YES : NO;
-    
-    messageView.duration = duration;
-    messageView.hidden = YES;
-    
-    [[[UIApplication sharedApplication] keyWindow] insertSubview:messageView atIndex:1];
+    TWMessageView *messageView = [self messageWithTitle:title description:description type:type duration:duration callback:callback];
+
+    [self showMessage:messageView];
+}
+
+- (void)showMessage:(TWMessageView *)messageView {
     [self.messageBarQueue addObject:messageView];
     
     if (!self.messageVisible)
@@ -182,7 +206,7 @@ static UIColor *kTWDefaultMessageBarStyleSheetInfoStrokeColor = nil;
     }
 }
 
-- (void)hideAll
+- (TWMessageView *)currentMessageView
 {
     TWMessageView *currentMessageView = nil;
     
@@ -191,16 +215,40 @@ static UIColor *kTWDefaultMessageBarStyleSheetInfoStrokeColor = nil;
         if ([subview isKindOfClass:[TWMessageView class]])
         {
             currentMessageView = (TWMessageView *)subview;
-            [currentMessageView removeFromSuperview];
         }
     }
+    
+    return currentMessageView;
+}
+
+- (void)hideAll
+{
+    // Remove any currently visible views
+    [[self currentMessageView] removeFromSuperview];
     
     self.messageVisible = NO;
     [self.messageBarQueue removeAllObjects];
     [NSObject cancelPreviousPerformRequestsWithTarget:self];
 }
 
-- (void)updateMessageFrames {
+- (void)hideMessage:(TWMessageView *)messageView
+{
+    if ([self currentMessageView] == messageView) {
+        // TODO: Should the message animate out? Maby add animated: to the method?
+        [[self currentMessageView] removeFromSuperview];
+        
+        return;
+    }
+    
+    for (TWMessageView *queuedMessageView in self.messageBarQueue) {
+        if (queuedMessageView == messageView) {
+            [self.messageBarQueue removeObject:queuedMessageView];
+        }
+    }
+}
+
+- (void)updateMessageFrames
+{
     TWMessageView *currentMessageView = nil;
     
     for (UIView *subview in [[[UIApplication sharedApplication] keyWindow] subviews])
@@ -236,7 +284,7 @@ static UIColor *kTWDefaultMessageBarStyleSheetInfoStrokeColor = nil;
         
         TWMessageView *messageView = [self.messageBarQueue objectAtIndex:0];
         messageView.frame = CGRectMake(0, -[messageView height], [messageView width], [messageView height]);
-        messageView.hidden = NO;
+        [[[UIApplication sharedApplication] keyWindow] insertSubview:messageView atIndex:1];
         [messageView setNeedsDisplay];
         
         UITapGestureRecognizer *gest = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(itemSelected:)];
@@ -506,6 +554,16 @@ static UIColor *kTWDefaultMessageBarStyleSheetInfoStrokeColor = nil;
     }
     
     return descriptionLabelSize;
+}
+
+#pragma mark - Displaying
+
+- (void)show {
+    [[TWMessageBarManager sharedInstance] showMessage:self];
+}
+
+- (void)hide {
+    [[TWMessageBarManager sharedInstance] hideMessage:self];
 }
 
 @end

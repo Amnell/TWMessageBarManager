@@ -47,6 +47,20 @@ typedef enum {
 
 @end
 
+@interface TWMessageView : UIView
+
+/**
+ *  Adds the message to the display queue
+ */
+- (void)show;
+
+/**
+ *  Hides the message and removes it from the display queue
+ */
+- (void)hide;
+
+@end
+
 @interface TWMessageBarManager : NSObject
 
 /**
@@ -61,6 +75,50 @@ typedef enum {
  *  If no style sheet is supplied, a default class is provided on initialization (see implementation for details).
  */
 @property (nonatomic, strong) NSObject<TWMessageBarStyleSheet> *styleSheet;
+
+/**
+ *  Returns a message with the supplied title, description and type (dictates color, stroke and icon).
+ *
+ *  @param title        Header text in the message view.
+ *  @param description  Description text in the message view.
+ *  @param type         Type dictates color, stroke and icon shown in the message view.
+ *  @return TWmessageView a TWMessageView instance
+ */
+- (TWMessageView *)messageWithTitle:(NSString *)title description:(NSString *)description type:(TWMessageBarMessageType)type;
+
+/**
+ *  Returns a message with the supplied title, description, type (dictates color, stroke and icon) & callback block.
+ *
+ *  @param title        Header text in the message view.
+ *  @param description  Description text in the message view.
+ *  @param type         Type dictates color, stroke and icon shown in the message view.
+ *  @param callback     Callback block to be executed if a message is tapped.
+ *  @return TWmessageView a TWMessageView instance
+ */
+- (TWMessageView *)messageWithTitle:(NSString *)title description:(NSString *)description type:(TWMessageBarMessageType)type callback:(void (^)())callback;
+
+/**
+ *  Returns a message with the supplied title, description, type (dictates color, stroke and icon) & duration.
+ *
+ *  @param title        Header text in the message view.
+ *  @param description  Description text in the message view.
+ *  @param type         Type dictates color, stroke and icon shown in the message view.
+ *  @param duration     Default duration is 3 seconds, this can be overridden by supplying an optional duration parameter.
+ *  @return TWmessageView a TWMessageView instance
+ */
+- (TWMessageView *)messageWithTitle:(NSString *)title description:(NSString *)description type:(TWMessageBarMessageType)type duration:(CGFloat)duration;
+
+/**
+ *  Returns a message with the supplied title, description, type (dictates color, stroke and icon), callback block & duration.
+ *
+ *  @param title        Header text in the message view.
+ *  @param description  Description text in the message view.
+ *  @param type         Type dictates color, stroke and icon shown in the message view.
+ *  @param duration     Default duration is 3 seconds, this can be overridden by supplying an optional duration parameter.
+ *  @param callback     Callback block to be executed if a message is tapped.
+ *  @return TWmessageView a TWMessageView instance
+ */
+- (TWMessageView *)messageWithTitle:(NSString *)title description:(NSString *)description type:(TWMessageBarMessageType)type duration:(CGFloat)duration callback:(void (^)())callback;
 
 /**
  *  Shows a message with the supplied title, description and type (dictates color, stroke and icon).
@@ -103,9 +161,30 @@ typedef enum {
 - (void)showMessageWithTitle:(NSString *)title description:(NSString *)description type:(TWMessageBarMessageType)type duration:(CGFloat)duration callback:(void (^)())callback;
 
 /**
+ *  Returns the currently visible TWMessageView
+ *
+ *  @return TWMessageView Currently visibe TWMessageView, nil if none
+ */
+- (TWMessageView *)currentMessageView;
+
+/**
+ * Adds the given message to the queue and displays it when possible
+ *
+ * @param messageView   A TWmessageView instance
+ */
+- (void)showMessage:(TWMessageView *)messageView;
+
+/**
  *  Hides the topmost message from view and removes all remaining messages in the queue (not animated).
  */
 - (void)hideAll;
+
+/**
+ *  Removes a given TWMessageView from the queue. If it is visible it will be hidden and thus removed.
+ *
+ *  @param messageView A previously added message view currently visible or queued
+ */
+- (void)hideMessage:(TWMessageView *)messageView;
 
 /**
  Updates the frame for the current displaying message view to acommodate for the statusbar
