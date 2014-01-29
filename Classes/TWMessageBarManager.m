@@ -344,6 +344,8 @@ static UIColor *kTWDefaultMessageBarStyleSheetInfoStrokeColor = nil;
             {
                 [self showNextMessage];
             }
+            
+            [messageView setHit:NO];
         }];
     }
 }
